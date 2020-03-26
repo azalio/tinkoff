@@ -11,6 +11,5 @@ var token = flag.String("token", "", "your token")
 func main() {
 	flag.Parse()
 	rest()
+	// Chase()
 }
-
-
