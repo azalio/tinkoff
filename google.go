@@ -183,19 +183,25 @@ func Chase(portfolioList []sdk.PositionBalance) {
 			wantPrice, err := strconv.ParseFloat(sheet.Rows[idx][3].Value, 32)
 			if err == nil {
 				if wantPrice >= q.RegularMarketPrice {
-					log.Printf("%s want price: %f, current price: %f", q.Symbol, wantPrice, q.RegularMarketPrice)
+					text := fmt.Sprintf("%s want price: %f, current price: %f", q.Symbol, wantPrice, q.RegularMarketPrice)
+					log.Println(text)
+					sendMessageICQ(text, icqto)
 				}
 			}
 			sheet.Update(idx, 4, fmt.Sprintf("%f", q.FiftyDayAverage))
 			if sheet.Rows[idx][5].Value != fmt.Sprintf("%t", decision.FiftyDayAverage) {
-				log.Printf("%s FiftyDayAverage is changed. Was: %s, became: %t",
+				text := fmt.Sprintf("%s FiftyDayAverage is changed. Was: %s, became: %t",
 					sheet.Rows[idx][0].Value, sheet.Rows[idx][5].Value, decision.FiftyDayAverage)
+				log.Println(text)
+				sendMessageICQ(text, icqto)
 			}
 			sheet.Update(idx, 5, fmt.Sprintf("%t", decision.FiftyDayAverage))
 			sheet.Update(idx, 6, fmt.Sprintf("%f", q.TwoHundredDayAverage))
 			if sheet.Rows[idx][7].Value != fmt.Sprintf("%t", decision.TwoHundredDayAverage) {
-				log.Printf("%s TwoHundredDayAverage is changed. Was: %s, became: %t",
+				text := fmt.Sprintf("%s TwoHundredDayAverage is changed. Was: %s, became: %t",
 					sheet.Rows[idx][0].Value, sheet.Rows[idx][5].Value, decision.TwoHundredDayAverage)
+				log.Println(text)
+				sendMessageICQ(text, icqto)
 			}
 			sheet.Update(idx, 7, fmt.Sprintf("%t", decision.TwoHundredDayAverage))
 			sheet.Update(idx, 8, "https://www.tradingview.com/symbols/"+sheet.Rows[idx][0].Value)
@@ -232,7 +238,7 @@ func Chase(portfolioList []sdk.PositionBalance) {
 
 	for idxStocks, stock := range stocks {
 		sheet.Update(idx+idxStocks, 0, stock)
-		log.Printf("%s %v", stock, portfolioList[idxStocks].AveragePositionPrice.Currency)
+		// log.Printf("%s %v", stock, portfolioList[idxStocks].AveragePositionPrice.Currency)
 		sheet.Update(idx+idxStocks, 1, fmt.Sprintf("%v", portfolioList[idxStocks].AveragePositionPrice.Currency))
 	}
 
