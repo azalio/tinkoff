@@ -20,46 +20,47 @@ func rest() {
 	}
 	// log.Printf("%+v\n", accounts)
 
-	var stocks []string
+	// var stocks []string
 
 	for _, account := range accounts {
 		// log.Printf("%s - %s\n", account.Type, account.ID)
 		portfolioList := getPortfolio(client, account.ID)
 		// log.Printf("%+v\n", portfolioList)
 		updateGoogleSheet(account.Type, portfolioList)
-		for _, position := range portfolioList.Positions {
-			// log.Printf("%+v\n", position)
-			if position.InstrumentType == "Stock" {
-				if position.AveragePositionPrice.Currency == "RUB" {
-					// Yahoo finance wants YNDX.ME for MOEX
-					position.Ticker = position.Ticker + ".ME"
-				}
-				if !stringInSlice(position.Ticker, stocks) {
-					stocks = append(stocks, position.Ticker)
-				}
-			}
-		}
+		// for _, position := range portfolioList.Positions {
+		// 	// log.Printf("%+v\n", position)
+		// 	if position.InstrumentType == "Stock" {
+		// 		// if position.AveragePositionPrice.Currency == "RUB" {
+		// 		// 	// Yahoo finance wants YNDX.ME for MOEX
+		// 		// 	position.Ticker = position.Ticker + ".ME"
+		// 		// }
+		// 		if !stringInSlice(position.Ticker, stocks) {
+		// 			stocks = append(stocks, position.Ticker)
+		// 		}
+		// 	}
+		// }
+		Chase(portfolioList.Positions)
 		// for _, currencie := range portfolioList.Currencies {
 		// 	log.Printf("%+v\n", currencie)
 		// }
 	}
 
 	// log.Println(stocks)
-	iter := GetData(stocks)
-	for iter.Next() {
-		q := iter.Quote()
-		decisions := buyOrSellMA(q)
-		if err != nil {
-			log.Panicf("Problem with buyOrSellMA function, err is :%s", err)
-		}
-		// } else {
-		// 	log.Printf("Symbol is: %s, decision is: %v", q.Symbol, decisions)
-		// }
-		log.Printf("Symbol: %s, RegularMarketPrice: %f, FiftyDayAverage: %f, TwoHundredDayAverage: %f",
-			q.Symbol, q.RegularMarketPrice, q.FiftyDayAverage, q.TwoHundredDayAverage)
-		log.Printf("buy FiftyDayAverage: %t, buy TwoHundredDayAverage: %t",
-			decisions.FiftyDayAverage, decisions.TwoHundredDayAverage)
-	}
+	// iter := GetData(stocks)
+	// for iter.Next() {
+	// 	q := iter.Quote()
+	// 	decisions := buyOrSellMA(q)
+	// 	if err != nil {
+	// 		log.Panicf("Problem with buyOrSellMA function, err is :%s", err)
+	// 	}
+	// 	// } else {
+	// 	// 	log.Printf("Symbol is: %s, decision is: %v", q.Symbol, decisions)
+	// 	// }
+	// 	log.Printf("Symbol: %s, RegularMarketPrice: %f, FiftyDayAverage: %f, TwoHundredDayAverage: %f",
+	// 		q.Symbol, q.RegularMarketPrice, q.FiftyDayAverage, q.TwoHundredDayAverage)
+	// 	log.Printf("buy FiftyDayAverage: %t, buy TwoHundredDayAverage: %t",
+	// 		decisions.FiftyDayAverage, decisions.TwoHundredDayAverage)
+	// }
 
 	// for _, share := range data {
 	// 	log.Printf("%v", share)

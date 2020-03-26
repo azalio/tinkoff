@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"github.com/TinkoffCreditSystems/invest-openapi-go-sdk"
-	"io/ioutil"
-	"strings"
-
+	// "github.com/piquette/finance-go/quote"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"gopkg.in/Iwark/spreadsheet.v2"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 // spreadsheetID from google docs
@@ -149,9 +151,93 @@ func updateGoogleSheet(account sdk.AccountType, portfolio sdk.Portfolio) {
 	// log.Println(totalTable)
 }
 
-// func Chase() {
-// 	// Get data from the Chase table in google docs
-// 	// Get data about stock
-// 	// make desicion about stock
-// 	// fill table again
-// }
+func Chase(portfolioList []sdk.PositionBalance) {
+	// Get data from the Chase table in google docs
+	sheetName := "Chase"
+	sheet := getSpreadsheet(sheetName)
+	// log.Printf("Sheet rows: %d", len(sheet.Rows))
+	// numOfRows := len(sheet.Rows)
+	var symbols []string
+	for idx, row := range sheet.Rows {
+		// log.Printf("%v %v", idx, row)
+		if idx == 0 {
+			continue
+		}
+		symbol := row[0].Value
+		// log.Printf("%s", symbol)
+		if row[1].Value == "RUB" {
+			symbol = symbol + ".ME" // for Yahoo
+		}
+		symbols = append(symbols, symbol)
+	}
+	// Get data about stocks
+	idx := 1
+	qIter := GetData(symbols)
+	for qIter.Next() {
+		q := qIter.Quote()
+		// log.Printf("%v", q)
+		if q.Symbol == sheet.Rows[idx][0].Value || q.Symbol == sheet.Rows[idx][0].Value+".ME" {
+			// log.Printf("%s %f", q.Symbol, q.RegularMarketPrice)
+			decision := buyOrSellMA(q)
+			sheet.Update(idx, 2, fmt.Sprintf("%f", q.RegularMarketPrice))
+			wantPrice, err := strconv.ParseFloat(sheet.Rows[idx][3].Value, 32)
+			if err == nil {
+				if wantPrice >= q.RegularMarketPrice {
+					log.Printf("%s want price: %f, current price: %f", q.Symbol, wantPrice, q.RegularMarketPrice)
+				}
+			}
+			sheet.Update(idx, 4, fmt.Sprintf("%f", q.FiftyDayAverage))
+			if sheet.Rows[idx][5].Value != fmt.Sprintf("%t", decision.FiftyDayAverage) {
+				log.Printf("%s FiftyDayAverage is changed. Was: %s, became: %t",
+					sheet.Rows[idx][0].Value, sheet.Rows[idx][5].Value, decision.FiftyDayAverage)
+			}
+			sheet.Update(idx, 5, fmt.Sprintf("%t", decision.FiftyDayAverage))
+			sheet.Update(idx, 6, fmt.Sprintf("%f", q.TwoHundredDayAverage))
+			if sheet.Rows[idx][7].Value != fmt.Sprintf("%t", decision.TwoHundredDayAverage) {
+				log.Printf("%s TwoHundredDayAverage is changed. Was: %s, became: %t",
+					sheet.Rows[idx][0].Value, sheet.Rows[idx][5].Value, decision.TwoHundredDayAverage)
+			}
+			sheet.Update(idx, 7, fmt.Sprintf("%t", decision.TwoHundredDayAverage))
+			sheet.Update(idx, 8, "https://www.tradingview.com/symbols/"+sheet.Rows[idx][0].Value)
+			idx += 1
+		}
+	}
+
+	var stocks []string
+	for _, position := range portfolioList {
+		// log.Printf("%+v\n", position)
+		if position.InstrumentType == "Stock" {
+			positionTickerRus := position.Ticker
+			if position.AveragePositionPrice.Currency == "RUB" {
+				// Yahoo finance wants YNDX.ME for MOEX
+				positionTickerRus = position.Ticker + ".ME"
+			}
+			if !stringInSlice(positionTickerRus, symbols) {
+				if !stringInSlice(position.Ticker, stocks) {
+					stocks = append(stocks, position.Ticker)
+				}
+			}
+		}
+	}
+
+	// log.Println("Symbols")
+	// for _, symbol := range symbols {
+	// 	log.Println(symbol)
+	// }
+
+	// log.Println("Stocks")
+	// for _, stock := range stocks {
+	// 	log.Println(stock)
+	// }
+
+	for idxStocks, stock := range stocks {
+		sheet.Update(idx+idxStocks, 0, stock)
+		log.Printf("%s %v", stock, portfolioList[idxStocks].AveragePositionPrice.Currency)
+		sheet.Update(idx+idxStocks, 1, fmt.Sprintf("%v", portfolioList[idxStocks].AveragePositionPrice.Currency))
+	}
+
+	err := sheet.Synchronize()
+	if err != nil {
+		panic(err.Error())
+	}
+}
