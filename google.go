@@ -185,6 +185,7 @@ func Chase(portfolioList []sdk.PositionBalance) {
 				if wantPrice >= q.RegularMarketPrice {
 					text := fmt.Sprintf("%s want price: %f, current price: %f", q.Symbol, wantPrice, q.RegularMarketPrice)
 					log.Println(text)
+					text = text + fmt.Sprintf("\nhttps://www.tradingview.com/symbols/%s", sheet.Rows[idx][0].Value)
 					sendMessageICQ(text, icqto)
 				}
 			}
@@ -193,6 +194,7 @@ func Chase(portfolioList []sdk.PositionBalance) {
 				text := fmt.Sprintf("%s FiftyDayAverage is changed. Was: %s, became: %t",
 					sheet.Rows[idx][0].Value, sheet.Rows[idx][5].Value, decision.FiftyDayAverage)
 				log.Println(text)
+				text = text + fmt.Sprintf("\nhttps://www.tradingview.com/symbols/%s", sheet.Rows[idx][0].Value)
 				sendMessageICQ(text, icqto)
 			}
 			sheet.Update(idx, 5, fmt.Sprintf("%t", decision.FiftyDayAverage))
@@ -201,6 +203,7 @@ func Chase(portfolioList []sdk.PositionBalance) {
 				text := fmt.Sprintf("%s TwoHundredDayAverage is changed. Was: %s, became: %t",
 					sheet.Rows[idx][0].Value, sheet.Rows[idx][5].Value, decision.TwoHundredDayAverage)
 				log.Println(text)
+				text = text + fmt.Sprintf("\nhttps://www.tradingview.com/symbols/%s", sheet.Rows[idx][0].Value)
 				sendMessageICQ(text, icqto)
 			}
 			sheet.Update(idx, 7, fmt.Sprintf("%t", decision.TwoHundredDayAverage))
